@@ -51,6 +51,11 @@ def linearize_and_solve(g):
 		j = int(edge['toIdx']) - 1
 		edge_type = edge['type'][0][0]
 
+		# retrieve edge measurement
+		z = edge['measurement'][0]
+		# retrieve edge information matrix
+		omega = edge['information'][0]
+
 		# pose-pose constraint
 		if edge_type=='P':
 			# edge.fromIdx and edge.toIdx describe the location of
@@ -60,13 +65,9 @@ def linearize_and_solve(g):
 			x1 = g['x'][i:i+3]  # the first robot pose
 			x2 = g['x'][j:j+3]  # the second robot pose
 
-			z = edge['measurement'][0]
 			# Computing the error and the Jacobians
 			# e the error vector. A Jacobian wrt x1. B Jacobian wrt x2
 			[e, A, B] = linearize_pose_pose_constraint(x1, x2, z)
-
-			# retrieve edge information matrix
-			omega = edge['information'][0]
 
 			# Update H matrix and vector b
 			# compute the blocks of H^k
@@ -95,61 +96,48 @@ def linearize_and_solve(g):
 			#     b((id_i-1)*3+1:id_i*3,1) = b((id_i-1)*3+1:id_i*3,1) + b_i;
 			#     b((id_j-1)*3+1:id_j*3,1) = b((id_j-1)*3+1:id_j*3,1) + b_j;
 
-	if needToAddPrior:
-		# TODO: add the prior for one pose of this edge
-		# This fixes one node to remain at its current location
-		needToAddPrior = False
+			if needToAddPrior:
+				# TODO: add the prior for one pose of this edge
+				# This fixes one node to remain at its current location
+				needToAddPrior = False
 
-	# pose-landmark constraint
-	elif edge_type=='L':
-		# edge.fromIdx and edge.toIdx describe the location of
-		# the first element of the pose and the landmark in the state vector
-		# You should use also this index when updating the elements
-		# of the H matrix and the vector b.
-		# edge.measurement is the measurement
-		# edge.information is the information matrix
-		# x1 = g.x(edge.fromIdx:edge.fromIdx+2)  # the robot pose
-		# x2 = g.x(edge.toIdx:edge.toIdx+1)      # the landmark
-
-			# x1 = g['x'][i:i+3]  # the first robot pose
-			# x2 = g['x'][j:j+3]  # the second robot pose
-
-		# Computing the error and the Jacobians
-		# e the error vector
-		# A Jacobian wrt x1
-		# B Jacobian wrt x2
-		[e, A, B] = linearize_pose_landmark_constraint(x1, x2, edge.measurement);
+		# pose-landmark constraint
+		elif edge_type=='L':
+			# edge.fromIdx and edge.toIdx describe the location of
+			# the first element of the pose and the landmark in the state vector
+			# You should use also this index when updating the elements
+			# of the H matrix and the vector b.
 
 
-		# TODO: compute and add the term to H and b
+			x1 = g['x'][i:i+3]  # the robot pose
+			x2 = g['x'][j:j+2]  # the landmark
 
-		# i = edge.fromIdx;
-		#    j = edge.toIdx;
-		#    x1 = g.x(i:i+2);  # the robot pose
-		#    x2 = g.x(j:j+1);  # the landmark
+			# Computing the error and the Jacobians
+			# e the error vector
+			# A Jacobian wrt x1
+			# B Jacobian wrt x2
+			[e, A, B] = linearize_pose_landmark_constraint(x1, x2, z)
 
-		#    # Computing the error and the Jacobians
-		#    [e, A, B] = linearize_pose_landmark_constraint(x1, x2, edge.measurement);
+			# compute the blocks of H^k
+			# Update H matrix and vector b
+			# compute the blocks of H^k
+			b_i = -A.T.dot(omega).dot(e)
+			b_j = -B.T.dot(omega).dot(e)
+			H_ii = A.T.dot(omega).dot(A)
+			H_ij = A.T.dot(omega).dot(B)
+			H_jj = B.T.dot(omega).dot(B)
 
-		#    omega=g.edges(eid).information(:,:);
-		#    %compute the blocks of H^k
-		#    b_i = -A'*omega*e;
-		#    b_j = -B'*omega*e;
-		#    H_ii= A'*omega*A;
-		#    H_ij= A'*omega*B;
-		#    H_jj= B'*omega*B;
+			# w.r.t. i should be 3
+			# w.r.t. j should be 2
 
-		#    % compute and add err
-		#    totalErr = totalErr + e'*omega*e;
+			# accumulate the blocks in H and b
+			H[i:i+3,i:i+3] += H_ii;
+			H[j:j+2,j:j+2] += H_jj;
+			H[i:i+3,j:j+2] += H_ij;
+			H[j:j+2,i:i+3] += H_ij.T
 
-		#    % accumulate the blocks in H and b    
-		#    H(i:i+2,i:i+2) = H(i:i+2,i:i+2) + H_ii;
-		#    H(j:j+1,j:j+1) = H(j:j+1,j:j+1) + H_jj;
-		#    H(i:i+2,j:j+1) = H(i:i+2,j:j+1) + H_ij;
-		#    H(j:j+1,i:i+2) = H(j:j+1,i:i+2) + H_ij';
-
-		#    b(i:i+2) = b(i:i+2) + b_i;
-		#    b(j:j+1) = b(j:j+1) + b_j;
+			b[i:i+3] += b_i
+			b[j:j+2] += b_j
 
 	# We solve the linear system, solution stored in dx.
 	# Instead of inverting H explicitly, we use the backslash operator

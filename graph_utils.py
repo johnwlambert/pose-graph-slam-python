@@ -43,9 +43,7 @@ def get_poses_landmarks(g):
 	poses = []
 	landmarks = []
 
-	for i in range(len(g['edges'])):
-		from_idx =  g['edges'][i]['from'][0][0][0]
-		offset_dim_arr_idx = g['idLookup_fieldnames_dict'][from_idx]
+	for (key, offset_dim_arr_idx) in g['idLookup_fieldnames_dict'].items():
 		value = g['offset_dim_arr'][offset_dim_arr_idx]
 		dim = int(value['dimension'])
 		offset = int(value['offset'])
@@ -71,10 +69,7 @@ def nnz_of_graph(g):
 	nnz = 0
 
 	# elements along the diagonal
-	for i in range(len(g['edges'])):
-
-		from_idx =  g['edges'][i]['from'][0][0][0]
-		offset_dim_arr_idx = g['idLookup_fieldnames_dict'][from_idx]
+	for (key, offset_dim_arr_idx) in g['idLookup_fieldnames_dict'].items():
 		value = g['offset_dim_arr'][offset_dim_arr_idx]
 		dim = int(value['dimension'])
 		offset = int(value['offset'])
@@ -99,19 +94,22 @@ def plot_graph(fig, g, iteration=-1):
 	"""
 	plot a 2D SLAM graph
 	"""
+	# retrieve indices into g's "x" vector -> start of each individual variable
+	# plot (x,y) positions from each pose/landmark
 	p, l = get_poses_landmarks(g)
 
 	plt.clf()
 
 	if len(l) > 0:
-		landmarkIdxX = l+1
-		landmarkIdxY = l+2
+		landmarkIdxX = l
+		landmarkIdxY = l+1
 		plt.scatter(g['x'][landmarkIdxX], g['x'][landmarkIdxY], 4, color='r', marker='o')
 
 	if len(p) > 0:
 		pIdxX = p
 		pIdxY = p+1
 		plt.scatter(g['x'][pIdxX], g['x'][pIdxY], 4, color='b', marker='x')
+
 	fig.canvas.draw()
 	plt.pause(1)
 	# plt.show()

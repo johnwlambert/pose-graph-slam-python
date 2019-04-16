@@ -100,18 +100,17 @@ if __name__ == '__main__':
 	DLR is Deutsches Zentrum für Luft- und Raumfahrt (German Aerospace Center)
 	"""
 	data_dir = '/Users/jlambert-admin/Documents/GeorgiaTech/CS_6643/pose-graph-slam/data'
-	data_file_fname = 'simulation-pose-pose.mat'
-	data_file_fpath = f'{data_dir}/{data_file_fname}'
-	g = load_graph_file(data_file_fpath)
 	
-
 	# simulation datasets
-
-	#g = importdata('../data/simulation-pose-landmark.dat');
+	# dataset_name = 'simulation-pose-landmark'
+	# dataset_name = 'simulation-pose-pose'
 
 	# real-world datasets
-	#g = importdata('../data/intel.dat');
-	#g = importdata('../data/dlr.dat');
+	#dataset_name = 'intel'
+	dataset_name = 'dlr'
+
+	data_file_fpath = f'{data_dir}/{dataset_name}.mat'
+	g = load_graph_file(data_file_fpath)
 
 	run_lsslam(g)
 
