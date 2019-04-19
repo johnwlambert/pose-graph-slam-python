@@ -45,9 +45,9 @@ class EdgePGO(object):
 def read_graph_from_disk(dataset_name):
 	"""
 	"""
-	edges_fpath = f'{dataset_name}_edges.txt'
-	vertices_fpath = f'{dataset_name}_vertices.txt'
-	initial_state_fpath = f'{dataset_name}_initial_state.txt'
+	edges_fpath = f'datasets/{dataset_name}/{dataset_name}_edges.txt'
+	vertices_fpath = f'datasets/{dataset_name}/{dataset_name}_vertices.txt'
+	initial_state_fpath = f'datasets/{dataset_name}/{dataset_name}_initial_state.txt'
 
 	edges = read_edge_data(edges_fpath)
 	vertex_map = read_vertex_data(vertices_fpath)
@@ -96,11 +96,11 @@ def read_edge_data(edges_fpath):
 		for i,j in enumerate(range(3+dim,3+dim+dim**2)):
 			information[i] = float(edge_info[j])
 		information = information.reshape(dim,dim)
-		edges += [EdgePGO(edge_type, from_v_id, to_v_id, measurement, information)]#, fromIdx, toIdx)]
+		edges += [EdgePGO(edge_type, from_v_id, to_v_id, measurement, information)]
 	return edges
 
 
-def read_vertices_data(vertices_fpath):
+def read_vertex_data(vertices_fpath):
 	"""
 		Args:
 		-	vertices_fpath:

@@ -4,7 +4,7 @@ import pdb
 import numpy as np
 import matplotlib.pyplot as plt
 
-from graph_utils import load_graph_file, plot_graph, plot_graph_connectivity, read_graph_from_disk
+from graph_utils import read_graph_from_disk, plot_graph, plot_graph_connectivity
 from gauss_newton import linearize_and_solve
 from compute_global_error import compute_global_error
 from manifold_constraints import normalize_angles
@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
 	# real-world datasets
 	#dataset_name = 'intel'
-	#dataset_name = 'dlr'
+	dataset_name = 'dlr'
 
 	data_file_fpath = f'{data_dir}/{dataset_name}.mat'
 	g = read_graph_from_disk(dataset_name)
