@@ -6,17 +6,6 @@ from scipy.io import loadmat
 import networkx as nx
 
 
-class PoseGraph2D(object):
-	""" """
-	def __init__(self, edges, vertex_map, x):
-		""" """
-		self.edges = edges
-		self.vertex_map = vertex_map
-
-		# state vector (concatenated pose vectors)
-		self.x = x
-
-
 class VertexPGO(object):
 	""" Pose Graph Vertex """
 	def __init__(self, v_id, x_offset_idx, dim):
@@ -42,108 +31,118 @@ class EdgePGO(object):
 		self.information = information
 
 
-def read_graph_from_disk(dataset_name):
-	"""
-	"""
-	edges_fpath = f'datasets/{dataset_name}/{dataset_name}_edges.txt'
-	vertices_fpath = f'datasets/{dataset_name}/{dataset_name}_vertices.txt'
-	initial_state_fpath = f'datasets/{dataset_name}/{dataset_name}_initial_state.txt'
+class PoseGraph2D(object):
+	""" """
+	def __init__(self, dataset_name):
+		""" """
+		edges, vertex_map, x = self.read_graph_from_disk(dataset_name)
 
-	edges = read_edge_data(edges_fpath)
-	vertex_map = read_vertex_data(vertices_fpath)
+		self.edges = edges
+		self.vertex_map = vertex_map
 
-	with open(initial_state_fpath, 'r') as f:
-		state_data = f.readlines()
-	x = np.zeros(len(state_data))
-
-	for i in range(len(state_data)):
-		x[i] = float(state_data[i])
-
-	pg2d = PoseGraph2D(edges, vertex_map, x)
-	return pg2d
+		# state vector (concatenated pose vectors)
+		self.x = x
 
 
+	def read_graph_from_disk(self, dataset_name):
+		"""
+		"""
+		edges_fpath = f'datasets/{dataset_name}/{dataset_name}_edges.txt'
+		vertices_fpath = f'datasets/{dataset_name}/{dataset_name}_vertices.txt'
+		initial_state_fpath = f'datasets/{dataset_name}/{dataset_name}_initial_state.txt'
 
-def read_edge_data(edges_fpath):
-	"""
-		Args:
-		-	edges_fpath
+		edges = self.read_edge_data(edges_fpath)
+		vertex_map = self.read_vertex_data(vertices_fpath)
 
-		Returns:
-		-	edges: list of EdgePGO objects
-	"""
-	with open(edges_fpath, 'r') as f:
-		edges_data = f.readlines()
+		with open(initial_state_fpath, 'r') as f:
+			state_data = f.readlines()
+		x = np.zeros(len(state_data))
 
-	edges = []
-	for edge_info in edges_data:
-		# print(edge_info)
-		edge_info = edge_info.strip().split(',')
-		edge_type = edge_info[0]
-		from_v_id = int(edge_info[1])
-		to_v_id = int(edge_info[2])
+		for i in range(len(state_data)):
+			x[i] = float(state_data[i])
 
-		if edge_type == 'L':
-			dim = 2
-
-		elif edge_type == 'P':
-			dim = 3
-
-		measurement = np.zeros(dim)
-		for i,j in enumerate(range(3,3+dim)):
-			measurement[i] = float(edge_info[j])
-		information = np.zeros(dim*dim)
-		for i,j in enumerate(range(3+dim,3+dim+dim**2)):
-			information[i] = float(edge_info[j])
-		information = information.reshape(dim,dim)
-		edges += [EdgePGO(edge_type, from_v_id, to_v_id, measurement, information)]
-	return edges
+		return edges, vertex_map, x
 
 
-def read_vertex_data(vertices_fpath):
-	"""
-		Args:
-		-	vertices_fpath:
+	def read_edge_data(self, edges_fpath):
+		"""
+			Args:
+			-	edges_fpath
 
-		Returns:
-		-	vertex_map: Python dictionary mapping vertex ID to VertexPGO objects
-	"""
-	with open(vertices_fpath, 'r') as f:
-		vertices_data = f.readlines()
+			Returns:
+			-	edges: list of EdgePGO objects
+		"""
+		with open(edges_fpath, 'r') as f:
+			edges_data = f.readlines()
 
-	vertex_map = {}
-	for line in vertices_data:
-		line = line.strip().split(',')
-		v_id = int(line[0])
-		x_offset_idx = int(line[1])
-		dim = int(line[2])
-		vertex_map[v_id] = VertexPGO(v_id, x_offset_idx, dim)
-	return vertex_map
+		edges = []
+		for edge_info in edges_data:
+			# print(edge_info)
+			edge_info = edge_info.strip().split(',')
+			edge_type = edge_info[0]
+			from_v_id = int(edge_info[1])
+			to_v_id = int(edge_info[2])
+
+			if edge_type == 'L':
+				dim = 2
+
+			elif edge_type == 'P':
+				dim = 3
+
+			measurement = np.zeros(dim)
+			for i,j in enumerate(range(3,3+dim)):
+				measurement[i] = float(edge_info[j])
+			information = np.zeros(dim*dim)
+			for i,j in enumerate(range(3+dim,3+dim+dim**2)):
+				information[i] = float(edge_info[j])
+			information = information.reshape(dim,dim)
+			edges += [EdgePGO(edge_type, from_v_id, to_v_id, measurement, information)]
+		return edges
+
+
+	def read_vertex_data(self, vertices_fpath):
+		"""
+			Args:
+			-	vertices_fpath:
+
+			Returns:
+			-	vertex_map: Python dictionary mapping vertex ID to VertexPGO objects
+		"""
+		with open(vertices_fpath, 'r') as f:
+			vertices_data = f.readlines()
+
+		vertex_map = {}
+		for line in vertices_data:
+			line = line.strip().split(',')
+			v_id = int(line[0])
+			x_offset_idx = int(line[1])
+			dim = int(line[2])
+			vertex_map[v_id] = VertexPGO(v_id, x_offset_idx, dim)
+		return vertex_map
+
+	def get_poses_landmarks(self):
+		"""
+		Extract the offset of the poses and the landmarks.
+
+			Args:
+			-	g
+
+			Returns:
+			-	poses
+			-	landmarks
+		"""
+		poses = []
+		landmarks = []
+		for v_id, v_pgo in self.vertex_map.items():
+			if v_pgo.dim == 3:
+				poses += [v_pgo.x_offset_idx]
+			elif v_pgo.dim == 2:
+				landmarks += [v_pgo.x_offset_idx]
+
+		return np.array(poses), np.array(landmarks)
 
 
 
-def get_poses_landmarks(g):
-	"""
-	Extract the offset of the poses and the landmarks.
-
-		Args:
-		-	g
-
-		Returns:
-		-	poses
-		-	landmarks
-	"""
-	poses = []
-	landmarks = []
-
-	for v_id, v_pgo in g.vertex_map.items():
-		if v_pgo.dim == 3:
-			poses += [v_pgo.x_offset_idx]
-
-		elif v_pgo.dim == 2:
-			landmarks += [v_pgo.x_offset_idx]
-
-	return np.array(poses), np.array(landmarks)
 
 
 
@@ -188,7 +187,7 @@ def plot_graph(fig, g, iteration=-1):
 	"""
 	# retrieve indices into g's "x" vector -> start of each individual variable
 	# plot (x,y) positions from each pose/landmark
-	p, l = get_poses_landmarks(g)
+	p, l = g.get_poses_landmarks()
 
 	plt.clf()
 
@@ -233,7 +232,7 @@ def write_graph_to_disk(dataset_name, g):
 
 
 	with open(vertices_fpath, 'w') as f:
-		for v_id, v in g.vertex_map.items():
+		for v_id, v in self.vertex_map.items():
 			f.write(f'{v.v_id},')
 			f.write(f'{v.x_offset_idx},')
 			f.write(f'{v.dim}\n')
