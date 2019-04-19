@@ -6,7 +6,7 @@ import scipy.sparse.linalg
 from scipy.sparse import csc_matrix
 
 from error_jacobians import linearize_pose_landmark_constraint, linearize_pose_pose_constraint
-from graph_utils import nnz_of_graph
+from pose_graph import nnz_of_graph
 
 from iterative_solvers import cg
 

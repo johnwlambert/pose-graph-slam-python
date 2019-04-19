@@ -4,7 +4,7 @@ import pdb
 import numpy as np
 import matplotlib.pyplot as plt
 
-from graph_utils import PoseGraph2D, plot_graph, plot_graph_connectivity
+from pose_graph import PoseGraph2D, plot_graph, plot_graph_connectivity
 from gauss_newton import linearize_and_solve
 from compute_global_error import compute_global_error
 from manifold_constraints import normalize_angles
