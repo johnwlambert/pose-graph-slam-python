@@ -27,14 +27,14 @@ def load_graph_file(data_file_fpath, dataset_name):
 	g['idLookup_fieldnames_dict'] = idLookup_fieldnames_dict
 	g['offset_dim_arr'] = offset_dim_arr
 
-	vertices = []
+	vertex_map = {}
 	# Verify that the fromIdx and toIdx in an edge, are the same 
 	# as the offset in vertex
 	for v_id,i in g['idLookup_fieldnames_dict'].items():
 		value = g['offset_dim_arr'][i]
 		dim = int(value['dimension'])
 		x_offset_idx = int(value['offset'])
-		vertices += [VertexPGO(v_id, x_offset_idx, dim)]
+		vertex_map[v_id] = VertexPGO(v_id, x_offset_idx, dim)
 
 	edges = []
 	for edge in g['edges']:
@@ -47,7 +47,7 @@ def load_graph_file(data_file_fpath, dataset_name):
 		fromIdx = int(edge['fromIdx'])
 		toIdx = int(edge['toIdx'])
 
-		for v_pgo in vertices:
+		for _, v_pgo in vertex_map.items():
 			if v_pgo.v_id == from_v_id:
 				assert(fromIdx-1 == v_pgo.x_offset_idx)
 			
@@ -57,11 +57,10 @@ def load_graph_file(data_file_fpath, dataset_name):
 		edges += [EdgePGO(edge_type, from_v_id, to_v_id, measurement, information)]#, fromIdx, toIdx)]
 
 	state_vec = g['x']
-	pg2d = PoseGraph2D(edges, vertices, state_vec)
+	pg2d = PoseGraph2D(edges, vertex_map, state_vec)
 	write_graph_to_disk(dataset_name, pg2d)
 
-
-	pdb.set_trace()
+	quit()
 	
 	return g
 
@@ -91,7 +90,7 @@ def write_graph_to_disk(dataset_name, g):
 
 
 	with open(vertices_fpath, 'w') as f:
-		for v in g.vertices:
+		for v_id, v in g.vertex_map.items():
 			f.write(f'{v.v_id},')
 			f.write(f'{v.x_offset_idx},')
 			f.write(f'{v.dim}\n')

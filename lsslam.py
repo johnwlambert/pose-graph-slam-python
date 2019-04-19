@@ -71,11 +71,13 @@ if __name__ == '__main__':
 	#dataset_name = 'simulation-pose-pose'
 
 	# real-world datasets
-	# dataset_name = 'intel'
-	dataset_name = 'dlr'
+	dataset_name = 'intel'
+	#dataset_name = 'dlr'
 
 	data_file_fpath = f'{data_dir}/{dataset_name}.mat'
 	g = read_graph_from_disk(dataset_name)
+	#g = load_graph_file(data_file_fpath, dataset_name)
+
 
 	# solver = 'cg'
 	solver = 'sparse_scipy_solver'
