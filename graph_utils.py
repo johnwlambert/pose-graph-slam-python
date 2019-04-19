@@ -6,101 +6,6 @@ from scipy.io import loadmat
 import networkx as nx
 
 
-def load_graph_file(data_file_fpath, dataset_name):
-	"""
-	"""
-	scipy_obj = loadmat(data_file_fpath)
-	x = scipy_obj['g'][0,0][0]
-	edges = scipy_obj['g'][0,0][1]
-	offset_dim_arr = scipy_obj['g'][0,0][2][0,0]
-	idLookup_fieldnames = scipy_obj['idLookup_fieldnames']
-
-	g = {}
-	g['x'] = x.squeeze()
-	g['edges'] = edges
-
-	idLookup_fieldnames_dict = {}
-	for i in range(len(idLookup_fieldnames)):
-		fieldname = int(idLookup_fieldnames[i][0][0])
-		idLookup_fieldnames_dict[fieldname] = i
-
-	g['idLookup_fieldnames_dict'] = idLookup_fieldnames_dict
-	g['offset_dim_arr'] = offset_dim_arr
-
-	vertex_map = {}
-	# Verify that the fromIdx and toIdx in an edge, are the same 
-	# as the offset in vertex
-	for v_id,i in g['idLookup_fieldnames_dict'].items():
-		value = g['offset_dim_arr'][i]
-		dim = int(value['dimension'])
-		x_offset_idx = int(value['offset'])
-		vertex_map[v_id] = VertexPGO(v_id, x_offset_idx, dim)
-
-	edges = []
-	for edge in g['edges']:
-		edge_type = str(edge['type'][0][0])
-		from_v_id = int(edge['from'])
-		to_v_id = int(edge['to'])
-		measurement = edge['measurement'][0].squeeze()
-		information = edge['information'][0]
-
-		fromIdx = int(edge['fromIdx'])
-		toIdx = int(edge['toIdx'])
-
-		for _, v_pgo in vertex_map.items():
-			if v_pgo.v_id == from_v_id:
-				assert(fromIdx-1 == v_pgo.x_offset_idx)
-			
-			elif v_pgo.v_id == to_v_id:
-				assert(toIdx-1 == v_pgo.x_offset_idx)
-
-		edges += [EdgePGO(edge_type, from_v_id, to_v_id, measurement, information)]#, fromIdx, toIdx)]
-
-	state_vec = g['x']
-	pg2d = PoseGraph2D(edges, vertex_map, state_vec)
-	write_graph_to_disk(dataset_name, pg2d)
-
-	quit()
-	
-	return g
-
-
-
-def write_graph_to_disk(dataset_name, g):
-	"""
-	"""
-	edges_fpath = f'{dataset_name}_edges.txt'
-	vertices_fpath = f'{dataset_name}_vertices.txt'
-	initial_state_fpath = f'{dataset_name}_initial_state.txt'
-
-	with open(edges_fpath, 'w') as f:
-		for edge in g.edges:
-
-			f.write(f'{edge.edge_type},')
-			f.write(f'{edge.from_v_id},')
-			f.write(f'{edge.to_v_id},')
-			for z_i in edge.measurement:
-				f.write(f'{z_i},')
-
-			for ij, omega_ij in enumerate(edge.information.flatten()):
-				f.write(f'{omega_ij}')
-				if ij != len(edge.information.flatten())-1:
-					f.write(',')
-			f.write('\n')
-
-
-	with open(vertices_fpath, 'w') as f:
-		for v_id, v in g.vertex_map.items():
-			f.write(f'{v.v_id},')
-			f.write(f'{v.x_offset_idx},')
-			f.write(f'{v.dim}\n')
-
-
-	with open(initial_state_fpath, 'w') as f:
-		for x_i in g.x:
-			f.write(f'{x_i}\n')
-
-
 
 
 def read_graph_from_disk(dataset_name):
@@ -110,6 +15,29 @@ def read_graph_from_disk(dataset_name):
 	vertices_fpath = f'{dataset_name}_vertices.txt'
 	initial_state_fpath = f'{dataset_name}_initial_state.txt'
 
+	edges = read_edge_data(edges_fpath)
+	vertex_map = read_vertex_data(vertices_fpath)
+
+	with open(initial_state_fpath, 'r') as f:
+		state_data = f.readlines()
+	x = np.zeros(len(state_data))
+
+	for i in range(len(state_data)):
+		x[i] = float(state_data[i])
+
+	pg2d = PoseGraph2D(edges, vertex_map, x)
+	return pg2d
+
+
+
+def read_edge_data(edges_fpath):
+	"""
+		Args:
+		-	edges_fpath
+
+		Returns:
+		-	edges: list of EdgePGO objects
+	"""
 	with open(edges_fpath, 'r') as f:
 		edges_data = f.readlines()
 
@@ -135,8 +63,17 @@ def read_graph_from_disk(dataset_name):
 			information[i] = float(edge_info[j])
 		information = information.reshape(dim,dim)
 		edges += [EdgePGO(edge_type, from_v_id, to_v_id, measurement, information)]#, fromIdx, toIdx)]
+	return edges
 
 
+def read_vertices_data(vertices_fpath):
+	"""
+		Args:
+		-	vertices_fpath:
+
+		Returns:
+		-	vertex_map: Python dictionary mapping vertex ID to VertexPGO objects
+	"""
 	with open(vertices_fpath, 'r') as f:
 		vertices_data = f.readlines()
 
@@ -147,19 +84,7 @@ def read_graph_from_disk(dataset_name):
 		x_offset_idx = int(line[1])
 		dim = int(line[2])
 		vertex_map[v_id] = VertexPGO(v_id, x_offset_idx, dim)
-
-	with open(initial_state_fpath, 'r') as f:
-		state_data = f.readlines()
-	x = np.zeros(len(state_data))
-
-	for i in range(len(state_data)):
-		x[i] = float(state_data[i])
-
-	pg2d = PoseGraph2D(edges, vertex_map, x)
-	return pg2d
-
-
-
+	return vertex_map
 
 
 class PoseGraph2D(object):
@@ -196,9 +121,6 @@ class EdgePGO(object):
 		self.to_v_id = to_v_id
 		self.measurement = measurement
 		self.information = information
-		# self.fromIdx = fromIdx
-		# self.toIdx = toIdx
-
 
 
 def get_poses_landmarks(g):
@@ -283,45 +205,46 @@ def plot_graph(fig, g, iteration=-1):
 
 	fig.canvas.draw()
 	plt.pause(1)
-	# plt.show()
-	# plt.pause(1)
-	# plt.close('all')
-	# # draw line segments???
-	# if 0
-	# 	poseEdgesP1 = [];
-	# 	poseEdgesP2 = [];
-	# 	landmarkEdgesP1 = [];
-	# 	landmarkEdgesP2 = [];
-	# 	for eid = 1:length(g.edges)
-	# 		edge = g.edges(eid);
-	# 		if (strcmp(edge.type, 'P') != 0):
-	# 			poseEdgesP1 = [poseEdgesP1, g.x(edge.fromIdx:edge.fromIdx+1)]
-	# 			poseEdgesP2 = [poseEdgesP2, g.x(edge.toIdx:edge.toIdx+1)]
-	# 		elif (strcmp(edge.type, 'L') != 0):
-	# 			landmarkEdgesP1 = [landmarkEdgesP1, g.x(edge.fromIdx:edge.fromIdx+1)]
-	# 			landmarkEdgesP2 = [landmarkEdgesP2, g.x(edge.toIdx:edge.toIdx+1)]
-
-	# 	linespointx = [poseEdgesP1(1,:); poseEdgesP2(1,:)]
-	# 	linespointy = [poseEdgesP1(2,:); poseEdgesP2(2,:)]
-
-	# 	plot(linespointx, linespointy, "r")
-
-
-	#plot(poseEdgesP1(1,:), poseEdgesP1(2,:), "r");
-
-	#if (columns(poseEdgesP1) > 0)
-	#end
-	#if (columns(landmarkEdges) > 0)
-	#end
-
-
-	# plt.figure() #, "visible", "on");
-	#drawnow;
-	#pause(0.1);
 
 	filename = f'plots/lsslam_{iteration:03d}.png'
-	#print(filename, '-dpng');
 	plt.savefig(filename)
+
+
+def write_graph_to_disk(dataset_name, g):
+	"""
+	"""
+	edges_fpath = f'{dataset_name}_edges.txt'
+	vertices_fpath = f'{dataset_name}_vertices.txt'
+	initial_state_fpath = f'{dataset_name}_initial_state.txt'
+
+	with open(edges_fpath, 'w') as f:
+		for edge in g.edges:
+
+			f.write(f'{edge.edge_type},')
+			f.write(f'{edge.from_v_id},')
+			f.write(f'{edge.to_v_id},')
+			for z_i in edge.measurement:
+				f.write(f'{z_i},')
+
+			for ij, omega_ij in enumerate(edge.information.flatten()):
+				f.write(f'{omega_ij}')
+				if ij != len(edge.information.flatten())-1:
+					f.write(',')
+			f.write('\n')
+
+
+	with open(vertices_fpath, 'w') as f:
+		for v_id, v in g.vertex_map.items():
+			f.write(f'{v.v_id},')
+			f.write(f'{v.x_offset_idx},')
+			f.write(f'{v.dim}\n')
+
+
+	with open(initial_state_fpath, 'w') as f:
+		for x_i in g.x:
+			f.write(f'{x_i}\n')
+
+
 
 
 
