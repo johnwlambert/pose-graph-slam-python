@@ -5,16 +5,34 @@ import pdb
 
 
 class SE2(object):
-	def __init__(self, R, t):
+	def __init__(self, v):
 		"""
+		Computes the homogeneous transform matrix A of the pose vector v.
+			Args:
+			-	v: (3,1) vector
+			Returns:
+			-	A: 3x3 Numpy array
+
 			Args:
 			-	R: Numpy array of shape (2,2)
 			-	t: Numpy array of shape (2,1)
 		"""
-		assert(R.shape == (2,2))
-		assert(t.shape == (2,))
-		self.R = R
-		self.t = t
+		assert(v.shape==(3,))
+
+		v = v.squeeze()
+		self.v = v
+		self.t = v[:2]
+		self.theta = v[2]
+
+		c = np.cos(self.theta)
+		s = np.sin(self.theta)
+		self.R = np.array([	[c, -s],
+							[s,  c]])
+
+		self.dRT_dtheta = np.array([	[-s, c],
+										[-c, -s]])
+		# assert(R.shape == (2,2))
+		# assert(t.shape == (2,))
 
 		self.mat_3x3 = np.eye(3)
 		self.mat_3x3[:2,:2] = self.R
@@ -34,6 +52,13 @@ class SE2(object):
 		T_inv[:2,2] = -self.R.T.dot(self.t)
 		return T_inv
 
+
+
+class SE2_mat(object):
+	def __init__(self, mat_3x3):
+		self.R = mat_3x3[:2,:2]
+		self.t = mat_3x3[:2,2]
+
 	def as_pose_vector(self):
 		"""
 		Computes the pose vector v from a homogeneous transform A.
@@ -46,27 +71,15 @@ class SE2(object):
 		v[:2] = self.t
 		theta = np.arctan2(self.R[1,0],self.R[0,0])
 		v[2] = theta
-		return v.reshape(3,1)
+		return v #.reshape(3,1)
 
 
-class PoseVector(object):
-	def __init__(self, v):
-		v = v.squeeze()
-		self.v = v
-		self.t = v[:2]
-		self.theta = v[2]
+
+# class PoseVector(object):
+# 	def __init__(self, v):
+
 		
-	def as_SE2(self):
-		"""
-		Computes the homogeneous transform matrix A of the pose vector v.
-			Args:
-			-	v: (3,1) vector
-			Returns:
-			-	A: 3x3 Numpy array
-		"""
-		c = np.cos(self.theta)
-		s = np.sin(self.theta)
-		R = np.array([	[c, -s],
-						[s,  c]])
-		return SE2(R=R, t=self.t)
+# 	def as_SE2(self):
+# 		"""
+
 

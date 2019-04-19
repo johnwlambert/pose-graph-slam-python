@@ -1,4 +1,5 @@
 
+import cv2
 import pdb
 import numpy as np
 import scipy.sparse.linalg
@@ -7,8 +8,10 @@ from scipy.sparse import csc_matrix
 from error_jacobians import linearize_pose_landmark_constraint, linearize_pose_pose_constraint
 from graph_utils import nnz_of_graph
 
+from iterative_solvers import cg
 
-def linearize_and_solve(g):
+
+def linearize_and_solve(g, iter, dataset_name, solver):
 	"""
 	Performs one iteration of the Gauss-Newton algorithm.
 	Each constraint is linearized and added to the Hessian
@@ -27,34 +30,41 @@ def linearize_and_solve(g):
 		Returns:
 		-	dx: Numpy array (K,1) representing changed pose variables("delta x")
 	"""
-	nnz = nnz_of_graph(g)
-
 	# allocate the sparse H and the vector b
 	#H = spalloc(length(g.x), length(g.x), nnz);
-
+	
 	# x already accounts for 3 values per vertex
-	H = np.zeros((len(g['x']), len(g['x'])))
+	H = np.zeros((g.x.size,g.x.size))
 
-	# H=zeros(size(vmeans,2)*3,size(vmeans,2)*3);
-	# b=zeros(size(vmeans,2)*3,1);
+	analyze_nnz = False
+	if analyze_nnz:
+		nnz = nnz_of_graph(g)
+		print('H has shape ', H.shape, ' #elements in H is ', H.shape[0]*H.shape[1] ,' with ', nnz,' nnz')
+		nnz_entry_percent = nnz / (H.shape[0]*H.shape[1]) * 100
+		print('NNZ % = ', nnz_entry_percent)
+		print('Not NNZ % = ', 100. - nnz_entry_percent)
 
-	b = np.zeros((len(g['x']), 1))
+	b = np.zeros(g.x.size)
 	needToAddPrior = True
 
 	# compute the addend term to H and b for each of our constraints
 	print('\tLinearize and build system')
-	for eid in range(len(g['edges'])):
-		edge = g['edges'][eid]
+	for eid in range(len(g.edges)):
+
+		edge = g.edges[eid]
 
 		# convert 1-indexed to 0-indexed
-		i = int(edge['fromIdx']) - 1
-		j = int(edge['toIdx']) - 1
-		edge_type = edge['type'][0][0]
+		i_v_id = edge.from_v_id
+		j_v_id = edge.to_v_id
+
+		i = g.vertex_map[i_v_id].x_offset_idx
+		j = g.vertex_map[j_v_id].x_offset_idx
+		edge_type = edge.edge_type
 
 		# retrieve edge measurement
-		z = edge['measurement'][0]
+		z = edge.measurement
 		# retrieve edge information matrix
-		omega = edge['information'][0]
+		omega = edge.information
 
 		# pose-pose constraint
 		if edge_type=='P':
@@ -62,8 +72,8 @@ def linearize_and_solve(g):
 			# the first element of the pose in the state vector
 
 			# edge.information is the information matrix
-			x1 = g['x'][i:i+3]  # the first robot pose
-			x2 = g['x'][j:j+3]  # the second robot pose
+			x1 = g.x[i:i+3]  # the first robot pose
+			x2 = g.x[j:j+3]  # the second robot pose
 
 			# Computing the error and the Jacobians
 			# e the error vector. A Jacobian wrt x1. B Jacobian wrt x2
@@ -78,13 +88,6 @@ def linearize_and_solve(g):
 			H_jj = B.T.dot(omega).dot(B)
 
 			# accumulate the blocks in H and b
-			#     H((id_i-1)*3+1:id_i*3,(id_i-1)*3+1:id_i*3) = H((id_i-1)*3+1:id_i*3,(id_i-1)*3+1:id_i*3) + H_ii;
-			#     H((id_j-1)*3+1:id_j*3,(id_j-1)*3+1:id_j*3) = H((id_j-1)*3+1:id_j*3,(id_j-1)*3+1:id_j*3) + H_jj;
-			#     H((id_i-1)*3+1:id_i*3,(id_j-1)*3+1:id_j*3) = H((id_i-1)*3+1:id_i*3,(id_j-1)*3+1:id_j*3) + H_ij;
-			#     H((id_j-1)*3+1:id_j*3,(id_i-1)*3+1:id_i*3)= H((id_j-1)*3+1:id_j*3,(id_i-1)*3+1:id_i*3) + H_ij';
-			#     b((id_i-1)*3+1:id_i*3,1) = b((id_i-1)*3+1:id_i*3,1) + b_i;
-			#     b((id_j-1)*3+1:id_j*3,1) = b((id_j-1)*3+1:id_j*3,1) + b_j;
-
 			H[i:i+3,i:i+3] += H_ii;
 			H[j:j+3,j:j+3] += H_jj;
 			H[i:i+3,j:j+3] += H_ij;
@@ -92,9 +95,6 @@ def linearize_and_solve(g):
 
 			b[i:i+3] += b_i
 			b[j:j+3] += b_j
-
-			#     b((id_i-1)*3+1:id_i*3,1) = b((id_i-1)*3+1:id_i*3,1) + b_i;
-			#     b((id_j-1)*3+1:id_j*3,1) = b((id_j-1)*3+1:id_j*3,1) + b_j;
 
 			if needToAddPrior:
 				# TODO: add the prior for one pose of this edge
@@ -109,8 +109,8 @@ def linearize_and_solve(g):
 			# of the H matrix and the vector b.
 
 
-			x1 = g['x'][i:i+3]  # the robot pose
-			x2 = g['x'][j:j+2]  # the landmark
+			x1 = g.x[i:i+3]  # the robot pose
+			x2 = g.x[j:j+2]  # the landmark
 
 			# Computing the error and the Jacobians
 			# e the error vector
@@ -151,15 +151,44 @@ def linearize_and_solve(g):
 	# which is equivalent to the following
 	H[:3,:3] += np.eye(3)
 
+	#save_matrix_image( H.copy(), iter, dataset_name )
+
 	print('\tSystem size: ', H.shape )
 	print('\tSolving (may take some time) ...');
 	#SH=sparse(H)
 	#dx=SH\b
 
-	# Form Compressed Sparse Column (CSC) matrix
-	SH = csc_matrix(H)
-	dx = scipy.sparse.linalg.spsolve(SH,b)
+	b = b.reshape(-1,1)
+	if solver == 'cg':
+		dx0 = np.zeros((len(g.x),1))
+		dx, _ = cg(H,b, dx0)
+
+	elif solver == 'sparse_scipy_solver':
+		# Form Compressed Sparse Column (CSC) matrix
+		SH = csc_matrix(H)
+		dx = scipy.sparse.linalg.spsolve(SH,b)
 
 	print('\tLinear Solve Done! ')
-	return dx.reshape(-1,1)
+	return dx.squeeze()
+
+
+def save_matrix_image(H, iter, dataset_name):
+	""" """
+	cv2.imwrite(f'{dataset_name}_{iter}_H_matrix_original.png', H)
+	n,_ = H.shape
+	H = H.reshape(-1,1)
+	zero_bool = H == 0.0
+	nnz_bool = np.logical_not(zero_bool)
+	H[zero_bool] = 255
+	H[nnz_bool] = 0.0
+	H = H.reshape(n,n)
+	cv2.imwrite(f'{dataset_name}_{iter}_H_matrix_nnz.png', H)
+	
+
+
+
+
+
+
+
 
