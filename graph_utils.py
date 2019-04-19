@@ -6,6 +6,40 @@ from scipy.io import loadmat
 import networkx as nx
 
 
+class PoseGraph2D(object):
+	""" """
+	def __init__(self, edges, vertex_map, x):
+		""" """
+		self.edges = edges
+		self.vertex_map = vertex_map
+
+		# state vector (concatenated pose vectors)
+		self.x = x
+
+
+class VertexPGO(object):
+	""" Pose Graph Vertex """
+	def __init__(self, v_id, x_offset_idx, dim):
+		""" 
+		v_id is "vertex ID"
+		"""
+		self.v_id = v_id
+		self.x_offset_idx = x_offset_idx
+		self.dim = dim
+
+
+class EdgePGO(object):
+	""" Pose Graph Edge """
+	def __init__(self, edge_type, from_v_id, to_v_id, measurement, information):#, fromIdx, toIdx):
+		""" 
+		"from_v_id" is "from" vertex ID
+		"to_v_id" is "to" vertex ID
+		"""
+		self.edge_type = edge_type
+		self.from_v_id = from_v_id
+		self.to_v_id = to_v_id
+		self.measurement = measurement
+		self.information = information
 
 
 def read_graph_from_disk(dataset_name):
@@ -86,41 +120,6 @@ def read_vertices_data(vertices_fpath):
 		vertex_map[v_id] = VertexPGO(v_id, x_offset_idx, dim)
 	return vertex_map
 
-
-class PoseGraph2D(object):
-	""" """
-	def __init__(self, edges, vertex_map, x):
-		""" """
-		self.edges = edges
-		self.vertex_map = vertex_map
-
-		# state vector (concatenated pose vectors)
-		self.x = x
-
-
-class VertexPGO(object):
-	""" Pose Graph Vertex """
-	def __init__(self, v_id, x_offset_idx, dim):
-		""" 
-		v_id is "vertex ID"
-		"""
-		self.v_id = v_id
-		self.x_offset_idx = x_offset_idx
-		self.dim = dim
-
-
-class EdgePGO(object):
-	""" Pose Graph Edge """
-	def __init__(self, edge_type, from_v_id, to_v_id, measurement, information):#, fromIdx, toIdx):
-		""" 
-		"from_v_id" is "from" vertex ID
-		"to_v_id" is "to" vertex ID
-		"""
-		self.edge_type = edge_type
-		self.from_v_id = from_v_id
-		self.to_v_id = to_v_id
-		self.measurement = measurement
-		self.information = information
 
 
 def get_poses_landmarks(g):
