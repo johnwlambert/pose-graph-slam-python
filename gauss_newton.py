@@ -1,4 +1,5 @@
 
+import time
 import cv2
 import pdb
 import numpy as np
@@ -8,7 +9,7 @@ from scipy.sparse import csc_matrix
 from error_jacobians import linearize_pose_landmark_constraint, linearize_pose_pose_constraint
 from pose_graph import nnz_of_graph
 
-from iterative_solvers import cg
+# from iterative_solvers import cg
 
 
 def linearize_and_solve(g, iter, dataset_name, solver):
@@ -159,14 +160,17 @@ def linearize_and_solve(g, iter, dataset_name, solver):
 	#dx=SH\b
 
 	b = b.reshape(-1,1)
-	if solver == 'cg':
-		dx0 = np.zeros((len(g.x),1))
-		dx, _ = cg(H,b, dx0)
+	# if solver == 'cg':
+	# 	dx0 = np.zeros((len(g.x),1))
+	# 	dx, _ = cg(H,b, dx0)
 
-	elif solver == 'sparse_scipy_solver':
+	if solver == 'sparse_scipy_solver':
 		# Form Compressed Sparse Column (CSC) matrix
 		SH = csc_matrix(H)
+		start = time.time()
 		dx = scipy.sparse.linalg.spsolve(SH,b)
+		duration = time.time() - start
+		print(f'Linear solve took {duration:.2f}')
 
 	print('\tLinear Solve Done! ')
 	return dx.squeeze()
