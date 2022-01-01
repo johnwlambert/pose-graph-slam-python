@@ -5,11 +5,16 @@ Author: John Lambert
 """
 
 import pdb
+from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 from scipy.io import loadmat
+
+
+DATAROOT = Path(__file__).resolve().parent / "datasets"
+
 
 class VertexPGO(object):
 	"""Pose Graph Vertex """
@@ -38,7 +43,7 @@ class EdgePGO(object):
 
 class PoseGraph2D(object):
 	""" """
-	def __init__(self, dataset_name):
+	def __init__(self, dataset_name: str):
 		""" """
 		edges, vertex_map, x = self.read_graph_from_disk(dataset_name)
 
@@ -49,12 +54,12 @@ class PoseGraph2D(object):
 		self.x = x
 
 
-	def read_graph_from_disk(self, dataset_name):
+	def read_graph_from_disk(self, dataset_name: str):
 		"""
 		"""
-		edges_fpath = f'datasets/{dataset_name}/{dataset_name}_edges.txt'
-		vertices_fpath = f'datasets/{dataset_name}/{dataset_name}_vertices.txt'
-		initial_state_fpath = f'datasets/{dataset_name}/{dataset_name}_initial_state.txt'
+		edges_fpath = f'{DATAROOT}/{dataset_name}/{dataset_name}_edges.txt'
+		vertices_fpath = f'{DATAROOT}/{dataset_name}/{dataset_name}_vertices.txt'
+		initial_state_fpath = f'{DATAROOT}/{dataset_name}/{dataset_name}_initial_state.txt'
 
 		edges = self.read_edge_data(edges_fpath)
 		vertex_map = self.read_vertex_data(vertices_fpath)
@@ -69,7 +74,7 @@ class PoseGraph2D(object):
 		return edges, vertex_map, x
 
 
-	def read_edge_data(self, edges_fpath):
+	def read_edge_data(self, edges_fpath: str):
 		"""
 		Args:
 		    edges_fpath
@@ -105,7 +110,7 @@ class PoseGraph2D(object):
 		return edges
 
 
-	def read_vertex_data(self, vertices_fpath):
+	def read_vertex_data(self, vertices_fpath: str):
 		"""
 		
 		Args:

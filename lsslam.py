@@ -4,6 +4,7 @@
 Author: John Lambert
 """
 
+import argparse
 import time
 import pdb
 
@@ -16,7 +17,10 @@ from pose_graph import PoseGraph2D, plot_graph, plot_graph_connectivity
 from compute_global_error import compute_global_error
 
 
-def run_lsslam(solver, g, dataset_name: str, numIterations: int = 100):
+CONVERGENCE_TOL = 1e-10
+
+
+def run_lsslam(solver: str, g, dataset_name: str, numIterations: int = 100):
 	"""Run least squares SLAM.
 	
 	Args:
@@ -53,7 +57,7 @@ def run_lsslam(solver, g, dataset_name: str, numIterations: int = 100):
 		g.x += dx
 
 		g = manifold_constraints.normalize_angles(g)
-		if visualize==True:
+		if visualize:
 			# plot the current state of the graph
 			plot_graph(fig, g, i)
 		#err = compute_global_error(g)
@@ -62,7 +66,7 @@ def run_lsslam(solver, g, dataset_name: str, numIterations: int = 100):
 		print(f'Current error {err}')
 
 		# TODO: implement termination criterion as suggested on the sheet
-		if (np.linalg.norm(dx) < 1e-10):
+		if np.linalg.norm(dx) < CONVERGENCE_TOL:
 			break
 
 	print(f'Final error {err}')
@@ -70,17 +74,20 @@ def run_lsslam(solver, g, dataset_name: str, numIterations: int = 100):
 
 if __name__ == '__main__':
 	"""
-	DLR is Deutsches Zentrum für Luft- und Raumfahrt (German Aerospace Center)
 	"""
-	data_dir = '/Users/jlambert-admin/Documents/GeorgiaTech/CS_6643/pose-graph-slam/data'
-	
-	# simulation datasets
-	#dataset_name = 'simulation-pose-landmark'
-	#dataset_name = 'simulation-pose-pose'
+	parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--dataset_name",
+        type=str,
+        required=True,
+        choices=['simulation-pose-landmark', 'simulation-pose-pose', 'intel', 'dlr'],
+        help="Dataset to use for 2d pose SLAM. There are two simulation dataset, and two real-world datasets" \
+        "`DLR' represents a dataset collected at the" \
+        "Deutsches Zentrum für Luft- und Raumfahrt (German Aerospace Center) ",
+    )
+    args = parser.parse_args()
 
-	# real-world datasets
-	#dataset_name = 'intel'
-	dataset_name = 'dlr'
+	data_dir = '/Users/jlambert-admin/Documents/GeorgiaTech/CS_6643/pose-graph-slam/data'
 
 	g = PoseGraph2D(dataset_name)
 
@@ -88,5 +95,5 @@ if __name__ == '__main__':
 	solver = 'sparse_scipy_solver'
 
 	#plot_graph_connectivity(g)
-	run_lsslam(solver, g, dataset_name)
+	run_lsslam(solver, g, args.dataset_name)
 

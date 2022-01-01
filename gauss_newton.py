@@ -4,14 +4,15 @@
 Author: John Lambert
 """
 
-import time
-import cv2
 import pdb
+import time
+
+import cv2
 import numpy as np
 import scipy.sparse.linalg
 from scipy.sparse import csc_matrix
 
-from error_jacobians import linearize_pose_landmark_constraint, linearize_pose_pose_constraint
+import error_jacobians
 from pose_graph import nnz_of_graph
 
 # from iterative_solvers import cg
@@ -29,12 +30,11 @@ def linearize_and_solve(g, iter, dataset_name, solver):
     Factor.solve_A(b)
     # ------------------------
 
-            Args:
-            -	g: Python dictionary, containing graph information, with pose
-                            variables in a vector "x" of shape (K,1)
+    Args:
+        g: Python dictionary, containing graph information, with pose variables in a vector "x" of shape (K,1)
 
-            Returns:
-            -	dx: Numpy array (K,1) representing changed pose variables("delta x")
+    Returns:
+        dx: Numpy array (K,1) representing changed pose variables("delta x")
     """
     # allocate the sparse H and the vector b
     # H = spalloc(length(g.x), length(g.x), nnz);
@@ -83,7 +83,7 @@ def linearize_and_solve(g, iter, dataset_name, solver):
 
             # Computing the error and the Jacobians
             # e the error vector. A Jacobian wrt x1. B Jacobian wrt x2
-            [e, A, B] = linearize_pose_pose_constraint(x1, x2, z)
+            [e, A, B] = error_jacobians.linearize_pose_pose_constraint(x1, x2, z)
 
             # Update H matrix and vector b
             # compute the blocks of H^k
@@ -121,7 +121,7 @@ def linearize_and_solve(g, iter, dataset_name, solver):
             # e the error vector
             # A Jacobian wrt x1
             # B Jacobian wrt x2
-            [e, A, B] = linearize_pose_landmark_constraint(x1, x2, z)
+            [e, A, B] = error_jacobians.linearize_pose_landmark_constraint(x1, x2, z)
 
             # compute the blocks of H^k
             # Update H matrix and vector b
