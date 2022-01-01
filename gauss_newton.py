@@ -83,7 +83,7 @@ def linearize_and_solve(g, iter, dataset_name, solver):
 
             # Computing the error and the Jacobians
             # e the error vector. A Jacobian wrt x1. B Jacobian wrt x2
-            [e, A, B] = error_jacobians.linearize_pose_pose_constraint(x1, x2, z)
+            e, A, B = error_jacobians.linearize_pose_pose_constraint(x1, x2, z)
 
             # Update H matrix and vector b
             # compute the blocks of H^k
@@ -121,7 +121,7 @@ def linearize_and_solve(g, iter, dataset_name, solver):
             # e the error vector
             # A Jacobian wrt x1
             # B Jacobian wrt x2
-            [e, A, B] = error_jacobians.linearize_pose_landmark_constraint(x1, x2, z)
+            e, A, B = error_jacobians.linearize_pose_landmark_constraint(x1, x2, z)
 
             # compute the blocks of H^k
             # Update H matrix and vector b
