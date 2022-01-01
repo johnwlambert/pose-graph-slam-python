@@ -1,4 +1,3 @@
-
 """
 
 Author: John Lambert
@@ -12,7 +11,7 @@ class SE2(object):
     def __init__(self, v: np.ndarray) -> None:
         """
         Computes the homogeneous transform matrix A of the pose vector v.
-        
+
         Args:
             v: (3,1) vector
 
@@ -62,10 +61,10 @@ class SE2_mat(object):
     def as_pose_vector(self):
         """
         Computes the pose vector v from a homogeneous transform A.
-        
+
         Args:
             A: 3x3 Numpy array
-        
+
         Returns:
             v
         """

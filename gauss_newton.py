@@ -1,4 +1,3 @@
-
 """
 
 Author: John Lambert
@@ -180,8 +179,13 @@ def linearize_and_solve(g, iter, dataset_name, solver):
     return dx.squeeze()
 
 
-def save_matrix_image(H, iter, dataset_name):
-    """ """
+def save_matrix_image(H: np.ndarray, iter: int, dataset_name: str) -> None:
+    """
+    Args:
+        H: Hessian
+        iter: iteration number.
+        dataset_name:
+    """
     cv2.imwrite(f"{dataset_name}_{iter}_H_matrix_original.png", H)
     n, _ = H.shape
     H = H.reshape(-1, 1)
