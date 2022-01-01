@@ -1,7 +1,13 @@
+
+"""
+
+Author: John Lambert
+"""
+
 import numpy as np
 
 
-def clip_angle_to_arctan(theta):
+def clip_angle_to_arctan(theta: float) -> float:
     """
     Move to [-pi,pi] range
     """
@@ -16,11 +22,11 @@ def normalize_angles(g):
     Only use robot poses that do not correspond to landmark poses
             (those have a 3rd element theta)
 
-            Args:
-            -	g: graph, with poses OFF the manifold SO(2)
+    Args:
+        g: graph, with poses OFF the manifold SO(2)
 
-            Returns:
-            -	g:graph, with poses ON the manifold SO(2)
+    Returns:
+        g:graph, with poses ON the manifold SO(2)
     """
     for v_id, v_pgo in g.vertex_map.items():
         if v_pgo.dim == 3:

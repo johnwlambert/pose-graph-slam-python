@@ -1,20 +1,29 @@
 
+"""
+
+Author: John Lambert
+"""
+
 import time
 import pdb
+
 import numpy as np
 import matplotlib.pyplot as plt
 
+import gauss_newton
+import manifold_constraints
 from pose_graph import PoseGraph2D, plot_graph, plot_graph_connectivity
-from gauss_newton import linearize_and_solve
 from compute_global_error import compute_global_error
-from manifold_constraints import normalize_angles
 
 
-def run_lsslam(solver, g, dataset_name, numIterations = 100):
-	"""
-		Args:
-		-	g: graph
-		-	numIterations: the number of iterations of Gauss-Newton
+def run_lsslam(solver, g, dataset_name: str, numIterations: int = 100):
+	"""Run least squares SLAM.
+	
+	Args:
+	    solver:
+	    g: graph
+	    dataset_name:
+        numIterations: the number of iterations of Gauss-Newton
 	"""
 	visualize=True
 	if visualize==True:
@@ -35,7 +44,7 @@ def run_lsslam(solver, g, dataset_name, numIterations = 100):
 	for i in range(1,numIterations):
 		print(f'Performing iteration {i}')
 		start = time.time()
-		dx = linearize_and_solve(g, i, dataset_name, solver)
+		dx = gauss_newton.linearize_and_solve(g, i, dataset_name, solver)
 		end = time.time()
 		duration = end - start
 		print(f'Iter {i} took {duration:.3f} sec.')
@@ -43,7 +52,7 @@ def run_lsslam(solver, g, dataset_name, numIterations = 100):
 		# Apply the solution to the state vector g.x
 		g.x += dx
 
-		g = normalize_angles(g)
+		g = manifold_constraints.normalize_angles(g)
 		if visualize==True:
 			# plot the current state of the graph
 			plot_graph(fig, g, i)
@@ -57,7 +66,6 @@ def run_lsslam(solver, g, dataset_name, numIterations = 100):
 			break
 
 	print(f'Final error {err}')
-
 
 
 if __name__ == '__main__':
@@ -81,6 +89,4 @@ if __name__ == '__main__':
 
 	#plot_graph_connectivity(g)
 	run_lsslam(solver, g, dataset_name)
-
-
 

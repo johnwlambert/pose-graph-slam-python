@@ -1,14 +1,20 @@
+"""
+
+Author: John Lambert
+"""
+
 import pdb
 import numpy as np
 from se2_utils import SE2
 
 
-def pose_pose_constraint_error(x_i, x_j, z_ij):
+def pose_pose_constraint_error(x_i: np.ndarray, x_j: np.ndarray, z_ij: np.ndarray):
     """
+    
     Args:
-    -	x_i:
-    -	x_j:
-    -	z_ij:
+        x_i:
+        x_j:
+        z_ij:
     """
     pdb.set_trace()
     t_i = x_i[:2]
@@ -31,12 +37,12 @@ def pose_pose_constraint_error(x_i, x_j, z_ij):
     return e_ij
 
 
-def pose_landmark_constraint_error(x_i, x_l, z_il):
+def pose_landmark_constraint_error(x_i: np.ndarray, x_l: np.ndarray, z_il: np.ndarray):
     """
     Args:
-    -	x_i:
-    -	x_l:
-    -	z_il:
+        x_i:
+        x_l:
+        z_il:
     """
     pdb.set_trace()
     t_i = x_i[:2]
@@ -54,11 +60,11 @@ def compute_global_error(g):
     """
     Computes the total error of the graph.
 
-            Args:
-            -	g
+    Args:
+        g
 
-            Returns:
-            -	Fx
+    Returns:
+        Fx
     """
     Fx = 0
 

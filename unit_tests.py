@@ -1,3 +1,9 @@
+
+"""
+
+Author: John Lambert
+"""
+
 import numpy as np
 import pdb
 
@@ -5,7 +11,7 @@ from error_jacobians import linearize_pose_landmark_constraint, linearize_pose_p
 from se2_utils import v2t, t2v, invt
 
 
-def test_jacobian_pose_landmark():
+def test_jacobian_pose_landmark() -> None:
     """ """
     epsilon = 1e-5
 
@@ -79,7 +85,7 @@ def test_jacobian_pose_landmark():
         print("Jacobian for x2 appears to be correct")
 
 
-def test_jacobian_pose_pose():
+def test_jacobian_pose_pose() -> None:
     """ """
     epsilon = 1e-5
 

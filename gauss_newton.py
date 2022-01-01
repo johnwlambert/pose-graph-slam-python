@@ -1,3 +1,9 @@
+
+"""
+
+Author: John Lambert
+"""
+
 import time
 import cv2
 import pdb
