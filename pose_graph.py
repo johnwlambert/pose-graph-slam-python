@@ -1,13 +1,23 @@
 
+"""
+
+Author: John Lambert
+"""
+
 import pdb
+from pathlib import Path
+
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.io import loadmat
 import networkx as nx
+from scipy.io import loadmat
+
+
+DATAROOT = Path(__file__).resolve().parent / "datasets"
 
 
 class VertexPGO(object):
-	""" Pose Graph Vertex """
+	"""Pose Graph Vertex """
 	def __init__(self, v_id, x_offset_idx, dim):
 		""" 
 		v_id is "vertex ID"
@@ -18,7 +28,7 @@ class VertexPGO(object):
 
 
 class EdgePGO(object):
-	""" Pose Graph Edge """
+	"""Pose Graph Edge """
 	def __init__(self, edge_type, from_v_id, to_v_id, measurement, information):#, fromIdx, toIdx):
 		""" 
 		"from_v_id" is "from" vertex ID
@@ -33,7 +43,7 @@ class EdgePGO(object):
 
 class PoseGraph2D(object):
 	""" """
-	def __init__(self, dataset_name):
+	def __init__(self, dataset_name: str):
 		""" """
 		edges, vertex_map, x = self.read_graph_from_disk(dataset_name)
 
@@ -44,12 +54,12 @@ class PoseGraph2D(object):
 		self.x = x
 
 
-	def read_graph_from_disk(self, dataset_name):
+	def read_graph_from_disk(self, dataset_name: str):
 		"""
 		"""
-		edges_fpath = f'datasets/{dataset_name}/{dataset_name}_edges.txt'
-		vertices_fpath = f'datasets/{dataset_name}/{dataset_name}_vertices.txt'
-		initial_state_fpath = f'datasets/{dataset_name}/{dataset_name}_initial_state.txt'
+		edges_fpath = f'{DATAROOT}/{dataset_name}/{dataset_name}_edges.txt'
+		vertices_fpath = f'{DATAROOT}/{dataset_name}/{dataset_name}_vertices.txt'
+		initial_state_fpath = f'{DATAROOT}/{dataset_name}/{dataset_name}_initial_state.txt'
 
 		edges = self.read_edge_data(edges_fpath)
 		vertex_map = self.read_vertex_data(vertices_fpath)
@@ -64,13 +74,13 @@ class PoseGraph2D(object):
 		return edges, vertex_map, x
 
 
-	def read_edge_data(self, edges_fpath):
+	def read_edge_data(self, edges_fpath: str):
 		"""
-			Args:
-			-	edges_fpath
+		Args:
+		    edges_fpath
 
-			Returns:
-			-	edges: list of EdgePGO objects
+		Returns:
+		    edges: list of EdgePGO objects
 		"""
 		with open(edges_fpath, 'r') as f:
 			edges_data = f.readlines()
@@ -100,13 +110,14 @@ class PoseGraph2D(object):
 		return edges
 
 
-	def read_vertex_data(self, vertices_fpath):
+	def read_vertex_data(self, vertices_fpath: str):
 		"""
-			Args:
-			-	vertices_fpath:
+		
+		Args:
+		    vertices_fpath:
 
-			Returns:
-			-	vertex_map: Python dictionary mapping vertex ID to VertexPGO objects
+		Returns:
+		    vertex_map: Python dictionary mapping vertex ID to VertexPGO objects
 		"""
 		with open(vertices_fpath, 'r') as f:
 			vertices_data = f.readlines()
@@ -124,12 +135,12 @@ class PoseGraph2D(object):
 		"""
 		Extract the offset of the poses and the landmarks.
 
-			Args:
-			-	g
+		Args:
+		    g
 
-			Returns:
-			-	poses
-			-	landmarks
+		Returns:
+		    poses
+		    landmarks
 		"""
 		poses = []
 		landmarks = []
@@ -142,20 +153,16 @@ class PoseGraph2D(object):
 		return np.array(poses), np.array(landmarks)
 
 
-
-
-
-
-def nnz_of_graph(g):
+def nnz_of_graph(g) -> int:
 	"""
 	Calculates an upper bound on the number of non-zeros of a graph,
 	as duplicate edges might be counted several times
 
-		Args:
-		-	g
+	Args:
+	    g
 
-		Returns:
-		-	nnz: integer, number of non-zeros of a graph
+	Returns:
+	    nnz: integer, number of non-zeros of a graph
 	"""
 	nnz = 0
 
@@ -180,8 +187,7 @@ def nnz_of_graph(g):
 	return nnz
 
 
-
-def plot_graph(fig, g, iteration=-1):
+def plot_graph(fig, g, iteration: int = -1) -> None:
 	"""
 	plot a 2D SLAM graph
 	"""
@@ -208,7 +214,7 @@ def plot_graph(fig, g, iteration=-1):
 	plt.savefig(filename)
 
 
-def write_graph_to_disk(dataset_name, g):
+def write_graph_to_disk(dataset_name: str, g) -> None:
 	"""
 	"""
 	edges_fpath = f'{dataset_name}_edges.txt'
@@ -243,10 +249,7 @@ def write_graph_to_disk(dataset_name, g):
 			f.write(f'{x_i}\n')
 
 
-
-
-
-def plot_graph_connectivity(g):
+def plot_graph_connectivity(g) -> None:
 	"""
 	"""
 	G = nx.DiGraph()

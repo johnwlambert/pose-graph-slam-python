@@ -1,4 +1,9 @@
 
+"""
+
+Author: John Lambert
+"""
+
 import numpy as np
 import pdb
 
@@ -14,15 +19,15 @@ def linearize_pose_pose_constraint(v_i, v_j, z_ij):
 	We extract the poses of the vertices and the mean of this k'th edge.
 	Computes the taylor expansion of the error function of this k'th edge.
 
-		Args:
-		-	v_i: 3x1 vector (x,y,theta) of the first robot pose
-		-	v_j: 3x1 vector (x,y,theta) of the second robot pose
-		-	z 3x1 vector (x,y,theta) of the measurement
+	Args:
+	    v_i: 3x1 vector (x,y,theta) of the first robot pose
+	    v_j: 3x1 vector (x,y,theta) of the second robot pose
+	    z 3x1 vector (x,y,theta) of the measurement
 
-		Returns:
-		-	e: 3x1 error of the constraint -  e_k(x)
-		-	A: 3x3 Jacobian wrt x1 - d e_k(x) / d(x_i)
-		-	B: 3x3 Jacobian wrt x2 -  d e_k(x) / d(x_j)
+	Returns:
+	    e: 3x1 error of the constraint -  e_k(x)
+	    A: 3x3 Jacobian wrt x1 - d e_k(x) / d(x_i)
+	    B: 3x3 Jacobian wrt x2 -  d e_k(x) / d(x_j)
 	"""
 
 	# compute the homogeneous transforms of the previous solutions
@@ -52,23 +57,21 @@ def linearize_pose_pose_constraint(v_i, v_j, z_ij):
 	return e, A, B
 
 
-
-
 def linearize_pose_landmark_constraint(x_i, l, z):
 	"""
 	Compute the error of a pose-landmark constraint
 	and the Jacobians of the error.
 
 	Args:
-	-	x: 3x1 vector (x,y,theta) of the robot pose
-	-	l: 2x1 vector (x,y) of the landmark
-	-	z: 2x1 vector (x,y) of the measurement, the position of the landmark in
-			the coordinate frame of the robot given by the vector x
+	    x: 3x1 vector (x,y,theta) of the robot pose
+	    l: 2x1 vector (x,y) of the landmark
+	    z: 2x1 vector (x,y) of the measurement, the position of the landmark in
+	        the coordinate frame of the robot given by the vector x
 
-	Output
-	-	e: 2x1 error of the constraint
-	-	A: 2x3 Jacobian wrt x
-	-	B: 2x2 Jacobian wrt l
+	Returns:
+	    e: 2x1 error of the constraint
+	    A: 2x3 Jacobian wrt x
+	    B: 2x2 Jacobian wrt l
 	"""
 	l = l.squeeze()
 	z = z.squeeze()
@@ -82,8 +85,3 @@ def linearize_pose_landmark_constraint(x_i, l, z):
 	B = w_T_i.R.T
 
 	return e, A, B
-
-
-
-
-
