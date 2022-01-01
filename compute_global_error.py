@@ -10,7 +10,7 @@ from se2_utils import SE2
 
 def pose_pose_constraint_error(x_i: np.ndarray, x_j: np.ndarray, z_ij: np.ndarray):
     """
-    
+
     Args:
         x_i:
         x_j:
