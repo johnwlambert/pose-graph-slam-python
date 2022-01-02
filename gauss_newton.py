@@ -17,7 +17,7 @@ from pose_graph import nnz_of_graph
 # from iterative_solvers import cg
 
 
-def linearize_and_solve(g, iter, dataset_name, solver):
+def linearize_and_solve(g, iter: int, dataset_name: str, solver: str) -> np.ndarray:
     """
     Performs one iteration of the Gauss-Newton algorithm.
     Each constraint is linearized and added to the Hessian
@@ -86,11 +86,11 @@ def linearize_and_solve(g, iter, dataset_name, solver):
 
             # Update H matrix and vector b
             # compute the blocks of H^k
-            b_i = -A.T.dot(omega).dot(e)
-            b_j = -B.T.dot(omega).dot(e)
-            H_ii = A.T.dot(omega).dot(A)
-            H_ij = A.T.dot(omega).dot(B)
-            H_jj = B.T.dot(omega).dot(B)
+            b_i = -A.T @ omega @ e
+            b_j = -B.T @ omega @ e
+            H_ii = A.T @ omega @ A
+            H_ij = A.T @ omega @ B
+            H_jj = B.T @ omega @ B
 
             # accumulate the blocks in H and b
             H[i : i + 3, i : i + 3] += H_ii
@@ -125,11 +125,11 @@ def linearize_and_solve(g, iter, dataset_name, solver):
             # compute the blocks of H^k
             # Update H matrix and vector b
             # compute the blocks of H^k
-            b_i = -A.T.dot(omega).dot(e)
-            b_j = -B.T.dot(omega).dot(e)
-            H_ii = A.T.dot(omega).dot(A)
-            H_ij = A.T.dot(omega).dot(B)
-            H_jj = B.T.dot(omega).dot(B)
+            b_i = -A.T @ omega @ e
+            b_j = -B.T @ omega @ e
+            H_ii = A.T @ omega @ A
+            H_ij = A.T @ omega @ B
+            H_jj = B.T @ omega @ B
 
             # w.r.t. i should be 3
             # w.r.t. j should be 2

@@ -56,9 +56,8 @@ def pose_landmark_constraint_error(x_i: np.ndarray, x_l: np.ndarray, z_il: np.nd
     return e_il
 
 
-def compute_global_error(g):
-    """
-    Computes the total error of the graph.
+def compute_global_error(g) -> float:
+    """Computes the total error of the graph.
 
     Args:
         g

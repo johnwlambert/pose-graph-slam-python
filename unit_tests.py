@@ -25,11 +25,7 @@ def test_jacobian_pose_landmark() -> None:
     # check the error vector
     e_true = np.array([0.10569, -0.12349]).reshape(2, 1)
     if np.linalg.norm(e - e_true) > epsilon:
-        print("Your error function seems to return a wrong value")
-        print("Result of your function")
-        print(e)
-        print("True value")
-        print(e_true)
+        raise ValueError(f"Error function returns wrong value: est. {e} vs. true {e_true}")
     else:
         print("The computation of the error vector appears to be correct")
 

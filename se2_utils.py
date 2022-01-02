@@ -9,8 +9,7 @@ import pdb
 
 class SE2(object):
     def __init__(self, v: np.ndarray) -> None:
-        """
-        Computes the homogeneous transform matrix A of the pose vector v.
+        """Computes the homogeneous transform matrix A of the pose vector v.
 
         Args:
             v: (3,1) vector
@@ -59,8 +58,7 @@ class SE2_mat(object):
         self.t = mat_3x3[:2, 2]
 
     def as_pose_vector(self):
-        """
-        Computes the pose vector v from a homogeneous transform A.
+        """Computes the pose vector v from a homogeneous transform A.
 
         Args:
             A: 3x3 Numpy array
